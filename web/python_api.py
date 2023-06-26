@@ -9,14 +9,21 @@ from tools.tokennizer import Tokennizer
 import time
 import os
 import datetime
+import socket
+import requests
+
+
 
 log_folder = './chatGPTlogs'
+ip=''
 
 
 class python_api_handler(object):
 
     def __init__(self,context_max=3200):
         super().__init__()
+
+      
 
         # load config
         config = load_config(config_dict)
@@ -37,7 +44,8 @@ class python_api_handler(object):
         # for test
         self.requestor = OpenAI_Request(keys, model_name,request_address)
 
-    def generate_massage(self,user_input):
+
+    def generate_massage(self,user_input,user_ip):
         date_today = datetime.datetime.now().strftime("%Y-%m-%d")
 
         # 获取当前日期 #确保日志文件夹存在，如果不存在则创建一个
@@ -61,16 +69,22 @@ class python_api_handler(object):
                 f.write(f'question:{user_input}\n')
 
         st_time = time.time()
+        request_time=datetime.datetime.fromtimestamp(st_time).strftime("%Y-%m-%d %H:%M:%S")
+        
 
         res = self.requestor.post_request(self.context_handler.context)
         ed_time = time.time()
+      
+        
 
         print(f'post request time cost = {ed_time - st_time}')
+     
 
 
         with open(log_file_path, 'a') as f:
+            f.write(f'post request time cost = {ed_time - st_time}\nip:{user_ip}   request time:{request_time}\n')
+            
 
-            f.write(f'post request time cost = {ed_time - st_time}\n')
 
         if res.status_code == 200:
           
@@ -91,14 +105,12 @@ class python_api_handler(object):
 
             print(f'append context time cost = {time.time() - ed_time}')
             with open(log_file_path, 'a') as f:
-                f.write(f"\nresponse : {response}\n")
+                f.write(f"response : {response}\n\n")
             return response
         else:
             with open(log_file_path, 'a') as f:
                 f.write(res.json()+'\n')
             return '!!! The api call is abnormal, please check the backend log'
-
-
 
 
 
